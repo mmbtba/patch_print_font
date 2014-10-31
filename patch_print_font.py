@@ -22,11 +22,28 @@ from openerp.models import TransientModel, AbstractModel
 from openerp.osv import fields
 from openerp.api import Environment as Env
 from openerp.report.render.rml2pdf import customfonts
+from openerp.tools.safe_eval import safe_eval
 from reportlab import rl_config
 from reportlab.lib.styles import ParagraphStyle
 from openerp.addons.base.res import res_font
+import simplejson as json
 import glob
 import os
+
+def _get_alt_sysconfig(env):
+    config_obj = env["ir.config_parameter"].sudo()
+    wrap_style = safe_eval(config_obj.get_param('wrap_style', 'False'))
+    font_altns = json.loads(config_obj.get_param('font_altns'))
+    return wrap_style, font_altns
+
+def _set_alt_sysconfig(env, wrap_style, font_altns):
+    config_obj = env["ir.config_parameter"].sudo()
+    new_mappings = json.dumps(font_altns)
+    config_obj.set_param('wrap_style', repr(wrap_style))
+    config_obj.set_param('font_altns', new_mappings)
+    return
+
+_donot_sync = False
 
 def list_all_sysfonts():
     """
@@ -47,149 +64,140 @@ class patch_print_font(AbstractModel):
     #Do not touch _name it must be same as _inherit
     #_name = 'res.font'
     def _scan_disk(self, cr, uid, context=None):
+        res = True
         old_list_func = customfonts.list_all_sysfonts
         customfonts.list_all_sysfonts = list_all_sysfonts
-        res = super(patch_print_font, self)._scan_disk(cr, uid, context=context)
-        customfonts.list_all_sysfonts = old_list_func
+        try:
+            res = super(patch_print_font, self)._scan_disk(cr, uid, context=context)
+        finally:
+            customfonts.list_all_sysfonts = old_list_func
         return res
     
     def _sync(self, cr, uid, context=None):
-        res = super(patch_print_font, self)._sync(cr, uid, context=context)
+        res = True
+        if not _donot_sync:
+            res = super(patch_print_font, self)._sync(cr, uid, context=context)
+            env = Env(cr, uid, context)
+            wrap_style, font_altns = _get_alt_sysconfig(env)
+            if wrap_style:
+                ParagraphStyle.defaults['wordWrap'] = 'CJK'
+            for fontface, fontmode, fontname in font_altns:
+                font_obj = env['res.font'].search(['&', ('path', '!=', '/dev/null'),
+                    ('name', '=', fontname)])
+                if not font_obj:
+                    continue
+                font_obj = font_obj[0]
+                def _check(e):
+                    family, name, filename, mode = e
+                    return fontface != family or (fontmode != 'all' and fontmode != mode)
+                customfonts.CustomTTFonts = filter(_check, customfonts.CustomTTFonts)
+                customfonts.CustomTTFonts.append((fontface, font_obj.name, font_obj.path, fontmode))
         return res
     
-class fontname_define(TransientModel):
-    _name = 'fontname.define'
-    _rec_name = 'fontname' 
-    
-    _columns = {
-        'fontname': fields.char('Font Name', size=64, required=False, readonly=False),
-    }
-    _sql_constraints = [
-        ('fontname_define_uniq', 'unique (fontname)', 'The Name of the font must be unique !')
-    ]
-
 class fontname_alternative(TransientModel):
-    _name = 'fontname.alternative'
+    _name = 'fontface.alternative'
     
+    def _fontname_list_get(self, cr, uid, context=None):
+        env = Env(cr, uid, context)
+        fonts = env['res.font'].search([('path', '!=', '/dev/null')])
+        if len(fonts) == 0:
+            _donot_sync = True
+            try:
+                env['res.font']._scan_disk()
+            finally:
+                _donot_sync = False
+            fonts = env['res.font'].search([('path', '!=', '/dev/null')])
+        return [(font.name, font.name + '/' + font.family) for font in fonts]
+
     _columns = {
-        'fontname': fields.many2one('fontname.define', 'Font Name', required=True, \
-            ondelete = 'cascade'),
+        'fontface': fields.char('Font Face', required=True),
         'fontmode': fields.selection([
             ('all','All'),
             ('normal','Normal'),
             ('bold','Bold'),
             ('italic','Italic/Oblique'),
             ('bolditalic', 'BoldItalic/BoldOblique')], 'Font Mode', required=True),
-        'fontnamealts': fields.many2many('fontname.define', 'fontname_alternative_rel', \
-            'alt_id', 'name_id', 'Font Alternatives')
+        'fontname': fields.selection(_fontname_list_get, 'Font Name', required=True)
     }
     
     _sql_constraints = [
-        ('fontname_alternative_uniq', 'unique (fontname, fontmode)', \
-            'You can not register two fonts with the same name and mode!'),    
-    ]
-    
-    def onchange_fontname(self, cr, uid, ids, font_id):
-        return {'domain': {'fontnamealts': [('id', '!=', font_id)]}}
+        ('fontface_alternative_uniq', 'unique (fontface, fontmode)', \
+            'You can not register two fonts with the same face and mode!'),    
+    ]    
 
-class font_alternatives_wizard(TransientModel):
-    _name = 'fontname.alternatives.settings'
+class font_alternative_settings(TransientModel):
+    _name = 'fontface.alternative.settings'
     _inherit = 'res.config.settings'
     _columns = {
-        'group_font_alternatives': fields.boolean("Group", group='base.group_user', \
-            implied_group='base.group_erp_manager'),
-        'wrap': fields.boolean('CJK wrap', 
-            help="If you are using CJK fonts, \
-                check this option will wrap your \
-                words properly at the edge of the  pdf report"),
-        'fontnamealts_map': fields.many2many('fontname.alternative', 'fontname_alternatives_wizard_rel', \
-                'wizard_id', 'fontalt_id', "Font Alternatives")
+#         'group_font_alternatives': fields.boolean("Group", group='base.group_user', \
+#             implied_group='base.group_erp_manager'),
+        'wrap_style': fields.boolean('CJK wrap', 
+                    help=("If you are using CJK fonts,"
+                        "check this option will wrap your "
+                        "words properly at the edge of the  pdf report")),
+        'font_altns': fields.many2many('fontface.alternative', 'fontface_alternative_settings_rel', \
+                'settings_id', 'fontalt_id', "Font Alternatives")
                 
     }
     
-    def get_default_wrap(self, cr, uid, fields, context):
-        if 'wrap' not in fields:
-            return {}
-        return {"wrap": ParagraphStyle.defaults['wordWrap'] == 'CJK'}
-
-    def _get_fontname_id(self, env, fontname):
-        tbl_font_def = env["fontname.define"]
-        fontname_rec = tbl_font_def.search([('fontname', '=', fontname)])
-        if len(fontname_rec) > 0:
-            fontname_rec = fontname_rec[0]
-        else:
-            fontname_rec = tbl_font_def.create({'fontname': fontname})
-        return fontname_rec.id
-    
-    def _get_fontnamealts_map(self, env):
-        tbl_font_alt = env["fontname.alternative"]
-        fontnamealts_map = []
-        for builtin_alt in res_font.BUILTIN_ALTERNATIVES:
-            fontname = builtin_alt[0];
-            fontmode = builtin_alt[1];
-            altnames = builtin_alt[2];
-            fontname_id = self._get_fontname_id(env, fontname)
-            fontnamealts = [];
-            for altname in altnames:
-                alt_id = self._get_fontname_id(env, altname)
-                fontnamealts.append(alt_id)
-            fontnamealt_rec = tbl_font_alt.search(['&', ('fontname', '=', fontname_id), \
+    def _retrieve_link_altn_id(self, env, fontface, fontmode, fontname):
+        tbl_font_alt = env["fontface.alternative"]
+        altn = tbl_font_alt.search(['&', ('fontface', '=', fontface), \
                 ('fontmode', '=', fontmode)])
-            if len(fontnamealt_rec) > 0:
-                fontnamealt_rec = fontnamealt_rec[0]
-                fontnamealt_rec.write({'fontnamealts': [(6,0,fontnamealts)]})
-            else:
-                fontnamealt_rec = tbl_font_alt.create(
-                    {'fontname': fontname_id, 'fontmode':fontmode, 
-                     'fontnamealts': [(6,0,fontnamealts)]})
+        if len(altn) > 0:
+            altn = altn[0]
+            altn.write({'fontname': fontname})
+        else:
+            altn = tbl_font_alt.create(
+                {'fontface': fontface, 'fontmode':fontmode, 
+                 'fontname': fontname})
+        return altn.id;
 
-            fontnamealts_map.append(fontnamealt_rec.id)
-        return fontnamealts_map
-    
-    def act_reload_fonts(self, cr, uid, ids, context=None):
-        return self.pool.get("res.font")._scan_disk(cr, uid, context=context)
-    
-    def act_set_chinesefont(self, cr, uid, ids, context=None):
-        obj = self.browse(cr, uid, ids[0], context)
+    def _get_font_altns(self, env, font_altns):
+        tbl_font_alt = env["fontface.alternative"]
+        temp_altns = []
+        for fontface, fontmode, fontname in font_altns:
+            if not env['res.font'].search(['&', ('path', '!=', '/dev/null'),
+                ('name', '=', fontname)]):
+                continue
+            altn_id = self._retrieve_link_altn_id(env, fontface, fontmode, fontname)
+
+            temp_altns.append(altn_id)
+        return temp_altns
+
+    def _get_defaut_altns(self, env):
         chinese_fonts = ['SimHei', 'SimSun', 'WenQuanYiZenHei']
-        builtin_alternatives = []
-        for builtin_alt in res_font.BUILTIN_ALTERNATIVES:
-            new_alts = chinese_fonts #+ [name for name in builtin_alt[2] if name not in chinese_fonts]
-            builtin_alternatives.append((
-                builtin_alt[0], builtin_alt[1], new_alts))
-        
-        res_font.BUILTIN_ALTERNATIVES = builtin_alternatives
-        obj.write({'fontnamealts_map': self._get_fontnamealts_map(obj.env)})
-        pass
+        report_facemodes = [('Helvetica', 'all'),
+                ('DejaVuSans', 'all'),
+                ('Times', 'all'),
+                ('Times-Roman', 'all'),
+                ('Courier', 'all')]
+        link_altn_ids = []
+        for font_name in chinese_fonts:
+            if env['res.font'].search(['&', ('path', '!=', '/dev/null'),
+                ('name', '=', font_name)]):
+                for font_face, font_mode in report_facemodes:
+                    altn_id = self._retrieve_link_altn_id(env, font_face, \
+                        font_mode, font_name)
+                    link_altn_ids.append(altn_id)
+                return link_altn_ids
+            pass
+        return link_altn_ids
 
-    def get_default_font_alts(self, cr, uid, fields, context):
-        if 'fontnamealts_map' not in fields:
-            return {}
+    def get_default_font_altns(self, cr, uid, fields, context):
         env = Env(cr, uid, context)
-        
-        tbl_res_font = env["res.font"]
-        for font in tbl_res_font.search([]):
-            self._get_fontname_id(env, font.name)
+        wrap_style, font_altns = _get_alt_sysconfig(env)
+        if not font_altns:
+            font_altns = self._get_defaut_altns(env)
+        else:
+            font_altns = self._get_font_altns(env, font_altns)
+            if not font_altns:
+                font_altns = self._get_defaut_altns(env)
+        return {"wrap_style": wrap_style, 
+            'font_altns': font_altns}
 
-        return {'fontnamealts_map': self._get_fontnamealts_map(env)}
-
-    def set_wrap(self, cr, uid, ids, context):
+    def set_font_altns(self, cr, uid, ids, context):
         obj = self.browse(cr, uid, ids[0], context)
-        if obj.wrap:
-            ParagraphStyle.defaults['wordWrap'] = 'CJK'
+        _set_alt_sysconfig(obj.env, obj.wrap_style, 
+            [(alt.fontface, alt.fontmode,alt.fontname) for alt in obj.font_altns])
         pass
-
-    def set_font_alts(self, cr, uid, ids, context):
-        obj = self.browse(cr, uid, ids[0], context)
-        builtin_alternatives = []
-        for builtin_alt in obj.fontnamealts_map:
-            alts = []
-            for alt in builtin_alt.fontnamealts:
-                alts.append(alt.fontname)
-            builtin_alternatives.append((
-                builtin_alt.fontname.fontname, builtin_alt.fontmode, alts))
-        
-        res_font.BUILTIN_ALTERNATIVES = builtin_alternatives
-        env = Env(cr, uid, context)
-        tbl_res_font = env["res.font"]
-        tbl_res_font._sync()
