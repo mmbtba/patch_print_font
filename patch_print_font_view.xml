@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+    	<record id="view_font_alternative_form" model="ir.ui.view">
+            <field name="name">Font Alternative</field>
+            <field name="model">fontname.alternative</field>
+            <field name="arch" type="xml">
+                <form string="Font Alternative">
+                	<group>
+	                	<field name='fontname'/>
+	                    <field name='fontmode'/>
+	                    <field name='fontnamealts' style="height:200px"
+	                    	widget="many2many_tags" domain="[('id', '!=', fontname)]"/>
+                    </group>
+                </form>
+            </field>
+        </record>    
+        
+        <record id="view_font_alternative_tree" model="ir.ui.view">
+            <field name="name">Font Alternative</field>
+            <field name="model">fontname.alternative</field>
+            <field name="arch" type="xml">
+                <tree string="Font Alternative">
+                	<field name='fontname'/>
+                    <field name='fontmode'/>
+                    <field name='fontnamealts'/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_font_alternative_search" model="ir.ui.view">
+            <field name="name">Font Alternative</field>
+            <field name="model">fontname.alternative</field>
+            <field name="arch" type="xml">
+                <search string="Font Alternative">
+                	<field name='fontname'/>
+                </search>
+			</field>
+		</record>
+                
+        <record id="view_font_alternatives_setting" model="ir.ui.view">
+            <field name="name">Font Alternatives Settings</field>
+            <field name="model">fontname.alternatives.settings</field>
+            <field name="arch" type="xml">
+                <form string="Font Alternatives Settings" class="oe_form_configuration">
+                    <header>
+                        <button string="Apply" type="object" name="execute" class="oe_highlight" default_focus="1"/>
+                        or
+                        <button string="Cancel" type="object" name="cancel" class="oe_link"/>
+                    </header>
+                    <separator string="Font Alternatives Settings"/>
+                    <div>
+                        <p>
+                            <label string="You can config the reportlab pdf font alternative here."/>
+                        </p>
+                    </div>
+                    <p class="oe_grey">
+                        Fonts used in the default report may not support the characters in your lanuage. 
+                        Use the setting here to replace the Original font with the font you choose.
+                    </p>
+                    <group>
+                    	<label for="id" string="CJK Options"/>
+                        <div>
+                            <field name="wrap" class="oe_inline"/>
+                            <label for="wrap"/>
+                        </div>
+                     </group>
+                     <group>
+                        <label for="id" string="Set Chinese Font"/>
+                        <div>
+                            <button string='Set Chinese Font' type="object" 
+                            	name="act_set_chinesefont" class="oe_link"/>
+                        </div>
+                     </group>
+                     <group>
+                        <label for="id" string="Font Alternatives"/>
+                    	<div>
+                        	<div>
+		                        <field name="fontnamealts_map" nolabel="1" colspan="4">
+			                        <tree string="Font Alternatives" editable='top'>
+			                            <field name='fontname' readonly='True'/>
+			                            <field name='fontmode' readonly='True'/>
+			                            <field name='fontnamealts'  domain="[('id', '!=', fontname)]"
+			                            	widget="many2many_tags"/>
+			                        </tree>
+		                        </field>
+	                        </div>
+	                     </div>
+                    </group>
+                    <group>
+                        <label for="id" string="Reload System Fonts"/>
+                        <div>
+                            <button string='Reload System Fonts' type="object" 
+                            	name="act_reload_fonts" class="oe_link"/>
+                        </div>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_font_alternatives_configuration" model="ir.actions.act_window">
+            <field name="name">Font Alternatives Settings</field>
+            <field name="res_model">fontname.alternatives.settings</field>
+            <field name="view_mode">form</field>
+            <field name="target">inline</field>
+        </record>
+        <menuitem id="menu_font_alternatives_configuration" parent="base.menu_config"
+            sequence="100" action="action_font_alternatives_configuration"/>
+    </data>
+</openerp>
