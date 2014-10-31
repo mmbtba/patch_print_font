@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-10-31 16:47+0000\n"
-"PO-Revision-Date: 2014-11-01 01:01+0800\n"
+"POT-Creation-Date: 2014-10-31 17:49+0000\n"
+"PO-Revision-Date: 2014-11-01 01:52+0800\n"
 "Last-Translator: jzk <jzkdl@163.com>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -45,7 +45,7 @@ msgstr "CJK 选项"
 #. module: patch_print_font
 #: field:fontface.alternative.settings,wrap_style:0
 msgid "CJK wrap"
-msgstr "CJK wrap"
+msgstr "CJK 换行"
 
 #. module: patch_print_font
 #: view:fontface.alternative.settings:patch_print_font.view_font_alternative_setting
@@ -69,6 +69,7 @@ msgstr "Created on"
 #: view:fontface.alternative:patch_print_font.view_font_alternative_search
 #: view:fontface.alternative:patch_print_font.view_font_alternative_tree
 #: view:fontface.alternative.settings:patch_print_font.view_font_alternative_setting
+#: field:fontface.alternative.settings,font_altns:0
 msgid "Font Alternative"
 msgstr "字体替换"
 
@@ -78,11 +79,6 @@ msgstr "字体替换"
 #: model:ir.ui.menu,name:patch_print_font.menu_font_alternative_configuration
 msgid "Font Alternative Settings"
 msgstr "字体替换设置"
-
-#. module: patch_print_font
-#: field:fontface.alternative.settings,font_altns:0
-msgid "Font Alternatives"
-msgstr "Font Alternatives"
 
 #. module: patch_print_font
 #: field:fontface.alternative,fontface:0
