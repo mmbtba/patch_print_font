@@ -129,14 +129,14 @@ class font_alternative_settings(TransientModel):
     _name = 'fontface.alternative.settings'
     _inherit = 'res.config.settings'
     _columns = {
-#         'group_font_alternatives': fields.boolean("Group", group='base.group_user', \
+#         'group_font_alternative': fields.boolean("Group", group='base.group_user', \
 #             implied_group='base.group_erp_manager'),
         'wrap_style': fields.boolean('CJK wrap', 
                     help=("If you are using CJK fonts,"
                         "check this option will wrap your "
                         "words properly at the edge of the  pdf report")),
         'font_altns': fields.many2many('fontface.alternative', 'fontface_alternative_settings_rel', \
-                'settings_id', 'fontalt_id', "Font Alternatives")
+                'settings_id', 'fontalt_id', "Font Alternative")
                 
     }
     
