@@ -33,7 +33,7 @@ import os
 def _get_alt_sysconfig(env):
     config_obj = env["ir.config_parameter"].sudo()
     wrap_style = safe_eval(config_obj.get_param('wrap_style', 'False'))
-    font_altns = json.loads(config_obj.get_param('font_altns'))
+    font_altns = json.loads(config_obj.get_param('font_altns', '{}'))
     return wrap_style, font_altns
 
 def _set_alt_sysconfig(env, wrap_style, font_altns):
@@ -44,6 +44,13 @@ def _set_alt_sysconfig(env, wrap_style, font_altns):
     return
 
 _donot_sync = False
+def _reload_sys_fonts(env):
+    _donot_sync = True
+    try:
+        env['res.font']._scan_disk()
+    finally:
+        _donot_sync = False
+    return
 
 def list_all_sysfonts():
     """
@@ -96,16 +103,12 @@ class patch_print_font(AbstractModel):
     
 class fontname_alternative(TransientModel):
     _name = 'fontface.alternative'
-    
+
     def _fontname_list_get(self, cr, uid, context=None):
         env = Env(cr, uid, context)
         fonts = env['res.font'].search([('path', '!=', '/dev/null')])
         if len(fonts) == 0:
-            _donot_sync = True
-            try:
-                env['res.font']._scan_disk()
-            finally:
-                _donot_sync = False
+            _reload_sys_fonts(env)
             fonts = env['res.font'].search([('path', '!=', '/dev/null')])
         return [(font.name, font.name + '/' + font.family) for font in fonts]
 
@@ -166,7 +169,7 @@ class font_alternative_settings(TransientModel):
         return temp_altns
 
     def _get_defaut_altns(self, env):
-        chinese_fonts = ['SimHei', 'SimSun', 'WenQuanYiZenHei']
+        chinese_fonts = ['SimHei', 'SimSun', 'WenQuanYiZenHei', 'WenQuanYiMicroHei']
         report_facemodes = [('Helvetica', 'all'),
                 ('DejaVuSans', 'all'),
                 ('Times', 'all'),
@@ -200,4 +203,9 @@ class font_alternative_settings(TransientModel):
         obj = self.browse(cr, uid, ids[0], context)
         _set_alt_sysconfig(obj.env, obj.wrap_style, 
             [(alt.fontface, alt.fontmode,alt.fontname) for alt in obj.font_altns])
+        obj.env['res.font']._sync()
+        pass
+    
+    def act_reload_sys_fonts(self, cr, uid, ids, context=None):
+        _reload_sys_fonts(Env(cr, uid, context))
         pass

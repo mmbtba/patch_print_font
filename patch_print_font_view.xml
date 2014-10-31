@@ -61,6 +61,13 @@
                         </div>
                      </group>
                      <group>
+                        <label for="id" string="Reload System Fonts"/>
+                        <div>
+                             <button type="object" name="act_reload_sys_fonts"
+                                 string="Reload System Fonts" class="oe_link"/>
+                        </div>
+                    </group>
+                     <group>
                         <label for="id" string="Font Alternative"/>
                     	<div>
 	                        <field name='font_altns' nolabel="1" colspan="4">
