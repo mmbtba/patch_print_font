@@ -6,36 +6,21 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-10-31 17:49+0000\n"
-"PO-Revision-Date: 2014-11-01 03:36+0800\n"
+"POT-Creation-Date: 2014-11-02 03:49+0000\n"
+"PO-Revision-Date: 2014-11-02 11:54+0800\n"
 "Last-Translator: jzk <jzkdl@163.com>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: \n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 "Language: zh_CN\n"
 "X-Generator: Poedit 1.6.10\n"
-
-#. module: patch_print_font
-#: selection:fontface.alternative,fontmode:0
-msgid "All"
-msgstr "All"
 
 #. module: patch_print_font
 #: view:fontface.alternative.settings:patch_print_font.view_font_alternative_setting
 msgid "Apply"
 msgstr "应用"
-
-#. module: patch_print_font
-#: selection:fontface.alternative,fontmode:0
-msgid "Bold"
-msgstr "Bold"
-
-#. module: patch_print_font
-#: selection:fontface.alternative,fontmode:0
-msgid "BoldItalic/BoldOblique"
-msgstr "BoldItalic/BoldOblique"
 
 #. module: patch_print_font
 #: view:fontface.alternative.settings:patch_print_font.view_font_alternative_setting
@@ -65,6 +50,21 @@ msgid "Created on"
 msgstr "Created on"
 
 #. module: patch_print_font
+#: view:fontface.alternative.settings:patch_print_font.view_font_alternative_setting
+msgid "Default Alternative Font"
+msgstr "默认替换字体"
+
+#. module: patch_print_font
+#: field:fontface.alternative.settings,default_font:0
+msgid "Default Font Name"
+msgstr "默认字体名"
+
+#. module: patch_print_font
+#: help:fontface.alternative.settings,default_font:0
+msgid "Default alternative For Unknown PDF Font."
+msgstr "未知PDF字体的默认替换字体"
+
+#. module: patch_print_font
 #: view:fontface.alternative:patch_print_font.view_font_alternative_form
 #: view:fontface.alternative:patch_print_font.view_font_alternative_search
 #: view:fontface.alternative:patch_print_font.view_font_alternative_tree
@@ -84,11 +84,6 @@ msgstr "字体替换设置"
 #: field:fontface.alternative,fontface:0
 msgid "Font Face"
 msgstr "字体模型"
-
-#. module: patch_print_font
-#: field:fontface.alternative,fontmode:0
-msgid "Font Mode"
-msgstr "字体模式"
 
 #. module: patch_print_font
 #: field:fontface.alternative,fontname:0
@@ -124,11 +119,6 @@ msgid ""
 msgstr "如果您使用CJK字体，选中此选项会妥善处理您语句在PDF报表的边缘进行换行"
 
 #. module: patch_print_font
-#: selection:fontface.alternative,fontmode:0
-msgid "Italic/Oblique"
-msgstr "Italic/Oblique"
-
-#. module: patch_print_font
 #: field:fontface.alternative,write_uid:0
 #: field:fontface.alternative.settings,write_uid:0
 msgid "Last Updated by"
@@ -141,16 +131,11 @@ msgid "Last Updated on"
 msgstr "Last Updated on"
 
 #. module: patch_print_font
-#: selection:fontface.alternative,fontmode:0
-msgid "Normal"
-msgstr "Normal"
-
-#. module: patch_print_font
 #: view:fontface.alternative.settings:patch_print_font.view_font_alternative_setting
 msgid "Reload System Fonts"
 msgstr "加载系统字体"
 
 #. module: patch_print_font
 #: sql_constraint:fontface.alternative:0
-msgid "You can not register two fonts with the same face and mode!"
-msgstr "你不能注册两种具有相同模型和模式的字体！"
+msgid "You can not register two fonts with the same face!"
+msgstr "您不能添加两种相同模型的字体！"

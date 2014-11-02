@@ -8,7 +8,6 @@
                 <form string="Font Alternative">
                 	<group>
 	                	<field name='fontface'/>
-	                    <field name='fontmode'/>
 	                    <field name='fontname' style="height:200px"
 	                    	domain="[('id', '!=', fontface)]"/>
                     </group>
@@ -22,7 +21,6 @@
             <field name="arch" type="xml">
                 <tree string="Font Alternative">
                 	<field name='fontface'/>
-                    <field name='fontmode'/>
                     <field name='fontname'/>
                 </tree>
             </field>
@@ -61,8 +59,9 @@
                         </div>
                      </group>
                      <group>
-                        <label for="id" string="Reload System Fonts"/>
+                        <label for="id" string="Default Alternative Font"/>
                         <div>
+                        	<field name="default_font" class="oe_inline"/>
                              <button type="object" name="act_reload_sys_fonts"
                                  string="Reload System Fonts" class="oe_link"/>
                         </div>
@@ -73,7 +72,6 @@
 	                        <field name='font_altns' nolabel="1" colspan="4">
 		                        <tree string="Font Alternative" editable='top'>
 		                            <field name='fontface' readonly='True'/>
-		                            <field name='fontmode' readonly='True'/>
 		                            <field name='fontname'  domain="[('id', '!=', fontface)]"/>
 		                        </tree>
 	                        </field>

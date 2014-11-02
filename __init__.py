@@ -19,3 +19,5 @@
 #
 ##############################################################################
 import patch_print_font
+
+uninstall_hook = patch_print_font.uninstall_hook
