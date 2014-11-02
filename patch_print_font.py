@@ -257,4 +257,5 @@ class font_alternative_settings(TransientModel):
     
     def act_reload_sys_fonts(self, cr, uid, ids, context=None):
         _reload_sys_fonts(Env(cr, uid, context))
-        pass
+        return self.cancel(cr, uid, ids, context)
+
